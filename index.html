@@ -1,0 +1,1825 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="theme-color" content="#0a0e14" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <link rel="manifest" href="/manifest.json" />
+  <title>PulseVoice — Private Voice Call</title>
+  <style>
+    :root {
+      --bg-main: #0a0e14;
+      --bg-card: #121822;
+      --bg-soft: #1b2432;
+      --border: rgba(255, 255, 255, 0.08);
+      --primary: #10b981;
+      --primary-glow: rgba(16, 185, 129, 0.42);
+      --danger: #ef4444;
+      --warn: #f59e0b;
+      --text: #f8fafc;
+      --subtext: #94a3b8;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100dvh;
+      background: var(--bg-main);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      overflow: hidden;
+      user-select: none;
+    }
+
+    .app {
+      display: flex;
+      flex-direction: column;
+      height: 100dvh;
+      max-width: 900px;
+      margin: 0 auto;
+      position: relative;
+    }
+
+    /* Top Bar */
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 18px;
+      background: var(--bg-card);
+      border-bottom: 1px solid var(--border);
+      z-index: 20;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .brand-icon {
+      width: 34px;
+      height: 34px;
+      border-radius: 10px;
+      background: rgba(16, 185, 129, 0.15);
+      border: 1px solid rgba(16, 185, 129, 0.35);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.05rem;
+    }
+
+    .brand-name {
+      font-size: 1.02rem;
+      font-weight: 800;
+      letter-spacing: 0.2px;
+    }
+
+    .brand-status {
+      font-size: 0.72rem;
+      color: var(--subtext);
+      display: block;
+    }
+
+    .top-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .chip {
+      padding: 6px 12px;
+      border-radius: 999px;
+      background: var(--bg-soft);
+      border: 1px solid var(--border);
+      font-size: 0.76rem;
+      font-weight: 700;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .chip.invite-btn {
+      background: rgba(16, 185, 129, 0.15);
+      border-color: rgba(16, 185, 129, 0.4);
+      color: #34d399;
+      cursor: pointer;
+    }
+
+    .chip.invite-btn:active {
+      transform: scale(0.96);
+    }
+
+    /* Lobby View */
+    .lobby {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      overflow-y: auto;
+    }
+
+    .lobby-box {
+      width: 100%;
+      max-width: 400px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      padding: 28px 22px;
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55);
+    }
+
+    .lobby-box h1 {
+      font-size: 1.4rem;
+      font-weight: 800;
+      margin-bottom: 6px;
+    }
+
+    .lobby-box p {
+      font-size: 0.86rem;
+      color: var(--subtext);
+      margin-bottom: 22px;
+      line-height: 1.45;
+    }
+
+    .invite-notice {
+      display: none;
+      align-items: center;
+      justify-content: space-between;
+      background: rgba(16, 185, 129, 0.12);
+      border: 1px solid rgba(16, 185, 129, 0.35);
+      color: #34d399;
+      padding: 11px 14px;
+      border-radius: 14px;
+      font-size: 0.84rem;
+      font-weight: 700;
+      margin-bottom: 16px;
+    }
+
+    .invite-notice button {
+      background: transparent;
+      border: none;
+      color: var(--text);
+      font-size: 0.75rem;
+      text-decoration: underline;
+      cursor: pointer;
+    }
+
+    .field {
+      margin-bottom: 16px;
+    }
+
+    .field-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 6px;
+    }
+
+    .field label {
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      color: var(--subtext);
+      letter-spacing: 0.5px;
+    }
+
+    .link-action {
+      background: none;
+      border: none;
+      color: var(--primary);
+      font-size: 0.76rem;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .input {
+      width: 100%;
+      padding: 14px 15px;
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      background: var(--bg-soft);
+      color: var(--text);
+      font-size: 0.96rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .input:focus {
+      border-color: var(--primary);
+    }
+
+    .btn-main {
+      width: 100%;
+      padding: 15px;
+      border: none;
+      border-radius: 14px;
+      background: var(--primary);
+      color: #022c22;
+      font-size: 1rem;
+      font-weight: 800;
+      cursor: pointer;
+      margin-top: 4px;
+      transition: transform 0.1s, opacity 0.2s;
+    }
+
+    .btn-main:active {
+      transform: scale(0.98);
+    }
+
+    .btn-main:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .lobby-footer-btns {
+      display: flex;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .btn-secondary {
+      flex: 1;
+      padding: 11px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: var(--bg-soft);
+      color: var(--text);
+      font-size: 0.82rem;
+      font-weight: 700;
+      cursor: pointer;
+      text-align: center;
+    }
+
+    .btn-secondary:active {
+      transform: scale(0.98);
+    }
+
+    .err-msg {
+      display: none;
+      margin-top: 12px;
+      padding: 11px 13px;
+      border-radius: 12px;
+      background: rgba(239, 68, 68, 0.15);
+      border: 1px solid rgba(239, 68, 68, 0.4);
+      color: #fca5a5;
+      font-size: 0.8rem;
+      line-height: 1.4;
+    }
+
+    /* Call Screen */
+    .call-screen {
+      display: none;
+      flex: 1;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .unlock-audio {
+      display: none;
+      background: rgba(245, 158, 11, 0.18);
+      border-bottom: 1px solid var(--warn);
+      color: #fcd34d;
+      padding: 10px;
+      text-align: center;
+      font-size: 0.82rem;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .room-strip {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 18px;
+      background: rgba(27, 36, 50, 0.55);
+      border-bottom: 1px solid var(--border);
+      font-size: 0.82rem;
+    }
+
+    .room-code-display {
+      color: var(--primary);
+      font-weight: 800;
+    }
+
+    /* Grid */
+    .grid {
+      flex: 1;
+      padding: 16px;
+      overflow-y: auto;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(155px, 1fr));
+      grid-auto-rows: 165px;
+      gap: 14px;
+      align-content: start;
+    }
+
+    .user-card {
+      background: var(--bg-card);
+      border: 2px solid var(--border);
+      border-radius: 22px;
+      padding: 16px 12px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      transition: border-color 0.12s ease, box-shadow 0.12s ease, transform 0.12s ease;
+      cursor: pointer;
+    }
+
+    .user-card.speaking {
+      border-color: var(--primary);
+      box-shadow: 0 0 24px var(--primary-glow);
+      transform: translateY(-2px);
+    }
+
+    .user-card.muted-card {
+      opacity: 0.8;
+    }
+
+    .avatar {
+      width: 62px;
+      height: 62px;
+      border-radius: 50%;
+      background: var(--bg-soft);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.35rem;
+      font-weight: 800;
+      color: var(--primary);
+      margin-bottom: 10px;
+      border: 2px solid rgba(255, 255, 255, 0.06);
+      transition: transform 0.12s ease, background 0.15s ease;
+    }
+
+    .user-card.speaking .avatar {
+      background: rgba(16, 185, 129, 0.18);
+      border-color: var(--primary);
+      transform: scale(1.07);
+    }
+
+    .u-name {
+      font-size: 0.92rem;
+      font-weight: 700;
+      max-width: 92%;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .u-sub {
+      font-size: 0.72rem;
+      color: var(--subtext);
+      margin-top: 4px;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .user-card.speaking .u-sub {
+      color: #34d399;
+      font-weight: 700;
+    }
+
+    .sig-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--primary);
+      display: inline-block;
+    }
+
+    .mic-pill {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.82rem;
+      background: var(--bg-soft);
+    }
+
+    .mic-pill.off {
+      background: rgba(239, 68, 68, 0.2);
+      color: var(--danger);
+    }
+
+    .mic-pill.on {
+      background: rgba(16, 185, 129, 0.16);
+      color: var(--primary);
+    }
+
+    /* Floating Emoji Reaction on Card */
+    .reaction-pop {
+      position: absolute;
+      top: 12px;
+      left: 12px;
+      font-size: 1.55rem;
+      pointer-events: none;
+      animation: floatUp 1.8s ease-out forwards;
+    }
+
+    @keyframes floatUp {
+      0% { transform: translateY(10px) scale(0.6); opacity: 0; }
+      20% { transform: translateY(0px) scale(1.15); opacity: 1; }
+      80% { transform: translateY(-14px) scale(1); opacity: 1; }
+      100% { transform: translateY(-26px) scale(0.8); opacity: 0; }
+    }
+
+    /* Per-User Volume Popover */
+    .vol-popup {
+      display: none;
+      position: absolute;
+      bottom: 8px;
+      left: 10px;
+      right: 10px;
+      background: rgba(10, 14, 20, 0.95);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 6px 10px;
+      z-index: 15;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .vol-popup.show {
+      display: flex;
+    }
+
+    .vol-popup input[type="range"] {
+      width: 100%;
+      accent-color: var(--primary);
+    }
+
+    /* Reaction Bar */
+    .reaction-bar {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      padding: 8px 16px;
+      background: rgba(18, 24, 34, 0.85);
+      border-top: 1px solid var(--border);
+    }
+
+    .react-btn {
+      background: var(--bg-soft);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 6px 13px;
+      font-size: 1.05rem;
+      cursor: pointer;
+      transition: transform 0.1s;
+    }
+
+    .react-btn:active {
+      transform: scale(1.22);
+    }
+
+    /* Bottom Dock */
+    .dock {
+      padding: 12px 16px calc(14px + env(safe-area-inset-bottom));
+      background: var(--bg-card);
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+    }
+
+    .dock-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      padding: 14px 18px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: var(--bg-soft);
+      color: var(--text);
+      font-size: 0.88rem;
+      font-weight: 800;
+      cursor: pointer;
+      transition: transform 0.1s, background 0.15s;
+    }
+
+    .dock-btn:active {
+      transform: scale(0.96);
+    }
+
+    .dock-btn.mic-btn {
+      min-width: 138px;
+      background: rgba(16, 185, 129, 0.16);
+      border-color: rgba(16, 185, 129, 0.4);
+      color: #34d399;
+    }
+
+    .dock-btn.mic-btn.is-muted {
+      background: var(--danger);
+      border-color: var(--danger);
+      color: #fff;
+    }
+
+    .dock-btn.ptt-btn.holding {
+      background: var(--primary);
+      color: #022c22;
+      border-color: var(--primary);
+    }
+
+    .dock-btn.spk-btn.deafened {
+      background: rgba(245, 158, 11, 0.2);
+      border-color: var(--warn);
+      color: #fcd34d;
+    }
+
+    .dock-btn.end-btn {
+      background: rgba(239, 68, 68, 0.16);
+      border-color: rgba(239, 68, 68, 0.4);
+      color: var(--danger);
+    }
+
+    /* Toast */
+    .toast {
+      position: fixed;
+      top: 70px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #1e293b;
+      color: #fff;
+      border: 1px solid var(--border);
+      padding: 9px 16px;
+      border-radius: 999px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s;
+      z-index: 100;
+    }
+
+    .toast.show {
+      opacity: 1;
+    }
+
+    @media (max-width: 480px) {
+      .grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+        padding: 12px;
+      }
+      .dock-btn {
+        padding: 13px 13px;
+        font-size: 0.82rem;
+      }
+      .dock-btn.mic-btn {
+        min-width: 118px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="toast" id="toast">Link Copied!</div>
+
+    <!-- Top Header -->
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-icon">🎙️</div>
+        <div>
+          <span class="brand-name">PulseVoice</span>
+          <span class="brand-status" id="subStatus">Private Voice Rooms</span>
+        </div>
+      </div>
+      <div class="top-actions">
+        <div class="chip" id="timerChip" style="display:none;">00:00</div>
+        <button type="button" class="chip invite-btn" id="topInviteBtn">🔗 Invite</button>
+      </div>
+    </header>
+
+    <!-- Lobby View -->
+    <main class="lobby" id="lobbyView">
+      <div class="lobby-box">
+        <h1>Join Voice Call</h1>
+        <p>Crystal clear real-time voice chat. Enter your name to connect instantly.</p>
+
+        <div class="invite-notice" id="inviteNotice">
+          <span id="inviteRoomText">Invited to Room #squad</span>
+          <button type="button" id="changeRoomBtn">Change</button>
+        </div>
+
+        <form id="joinForm">
+          <div class="field">
+            <div class="field-header">
+              <label for="nameInput">Your Name</label>
+            </div>
+            <input type="text" id="nameInput" class="input" placeholder="Enter your name" maxlength="22" required autocomplete="off" />
+          </div>
+
+          <div class="field" id="roomFieldGroup">
+            <div class="field-header">
+              <label for="roomInput">Private Room Code</label>
+              <button type="button" class="link-action" id="newRoomBtn">🎲 Generate New</button>
+            </div>
+            <input type="text" id="roomInput" class="input" value="squad" placeholder="e.g. squad" maxlength="28" required autocomplete="off" />
+          </div>
+
+          <button type="submit" class="btn-main" id="joinBtn">Join Voice Call</button>
+
+          <div class="lobby-footer-btns">
+            <button type="button" class="btn-secondary" id="lobbyShareBtn">🔗 Share Invite Link</button>
+            <button type="button" class="btn-secondary" id="installBtn" style="display:none;">📲 Install App</button>
+          </div>
+
+          <div class="err-msg" id="errBox"></div>
+        </form>
+      </div>
+    </main>
+
+    <!-- Active Call Screen -->
+    <section class="call-screen" id="callView">
+      <div class="unlock-audio" id="unlockBar">
+        🔊 Tap here if you cannot hear others
+      </div>
+
+      <div class="room-strip">
+        <div>Room: <span class="room-code-display" id="activeRoomTitle">#squad</span></div>
+        <div id="memberCount">1 Joined</div>
+      </div>
+
+      <div class="grid" id="peersGrid"></div>
+
+      <div class="reaction-bar">
+        <button type="button" class="react-btn" data-emoji="✋">✋</button>
+        <button type="button" class="react-btn" data-emoji="🔥">🔥</button>
+        <button type="button" class="react-btn" data-emoji="😂">😂</button>
+        <button type="button" class="react-btn" data-emoji="👍">👍</button>
+        <button type="button" class="react-btn" data-emoji="❤️">❤️</button>
+      </div>
+
+      <div class="dock">
+        <button type="button" class="dock-btn mic-btn" id="muteBtn">
+          <span id="muteIcon">🎙️</span>
+          <span id="muteLabel">Mic On</span>
+        </button>
+        <button type="button" class="dock-btn ptt-btn" id="pttBtn" title="Hold to Talk">
+          <span>🗣️ Hold</span>
+        </button>
+        <button type="button" class="dock-btn spk-btn" id="deafenBtn" title="Speaker Mute">
+          <span id="spkIcon">🔊</span>
+        </button>
+        <button type="button" class="dock-btn end-btn" id="leaveBtn">
+          <span>End</span>
+        </button>
+      </div>
+    </section>
+
+    <div id="audioPool" style="display:none;"></div>
+  </div>
+
+  <script src="https://unpkg.com/mqtt@5.10.1/dist/mqtt.min.js"></script>
+  <script>
+    'use strict';
+
+    // 1. Service Worker & Install App Support
+    let deferredPrompt = null;
+    const installBtn = document.getElementById('installBtn');
+
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js').catch(() => {});
+    }
+
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      installBtn.style.display = 'block';
+    });
+
+    installBtn.addEventListener('click', async () => {
+      if (!deferredPrompt) return;
+      deferredPrompt.prompt();
+      await deferredPrompt.userChoice.catch(() => {});
+      deferredPrompt = null;
+      installBtn.style.display = 'none';
+    });
+
+    // 2. Multi-Server Dual-Active Signaling & WebRTC Config
+    const RTC_CONFIG = {
+      iceServers: [
+        { urls: 'stun:stun.l.google.com:19302' },
+        { urls: 'stun:stun1.l.google.com:19302' },
+        { urls: 'stun:stun2.l.google.com:19302' },
+        { urls: 'stun:stun.cloudflare.com:3478' }
+      ],
+      iceCandidatePoolSize: 4,
+      bundlePolicy: 'max-bundle',
+      rtcpMuxPolicy: 'require'
+    };
+
+    // Dual-Active Broker Cluster: Connects to BOTH servers simultaneously so two friends NEVER land on different servers
+    const BROKER_URLS = [
+      'wss://broker.emqx.io:8084/mqtt',
+      'wss://broker.hivemq.com:8884/mqtt'
+    ];
+
+    function getPersistentDeviceId() {
+      const KEY = 'pulsevoice_device_uid_v4';
+      let id = null;
+      try { id = localStorage.getItem(KEY) || sessionStorage.getItem(KEY); } catch (_e) {}
+      if (!id) {
+        id = 'pv_' + Math.random().toString(36).slice(2, 10) + '_' + Date.now().toString(36);
+        try {
+          localStorage.setItem(KEY, id);
+          sessionStorage.setItem(KEY, id);
+        } catch (_e) {}
+      }
+      return id;
+    }
+
+    const selfId = getPersistentDeviceId();
+
+    // DOM References
+    const toast = document.getElementById('toast');
+    const subStatus = document.getElementById('subStatus');
+    const timerChip = document.getElementById('timerChip');
+    const topInviteBtn = document.getElementById('topInviteBtn');
+    const lobbyView = document.getElementById('lobbyView');
+    const callView = document.getElementById('callView');
+    const joinForm = document.getElementById('joinForm');
+    const nameInput = document.getElementById('nameInput');
+    const roomInput = document.getElementById('roomInput');
+    const roomFieldGroup = document.getElementById('roomFieldGroup');
+    const inviteNotice = document.getElementById('inviteNotice');
+    const inviteRoomText = document.getElementById('inviteRoomText');
+    const changeRoomBtn = document.getElementById('changeRoomBtn');
+    const newRoomBtn = document.getElementById('newRoomBtn');
+    const lobbyShareBtn = document.getElementById('lobbyShareBtn');
+    const joinBtn = document.getElementById('joinBtn');
+    const errBox = document.getElementById('errBox');
+    const unlockBar = document.getElementById('unlockBar');
+    const activeRoomTitle = document.getElementById('activeRoomTitle');
+    const memberCount = document.getElementById('memberCount');
+    const peersGrid = document.getElementById('peersGrid');
+    const muteBtn = document.getElementById('muteBtn');
+    const muteIcon = document.getElementById('muteIcon');
+    const muteLabel = document.getElementById('muteLabel');
+    const pttBtn = document.getElementById('pttBtn');
+    const deafenBtn = document.getElementById('deafenBtn');
+    const spkIcon = document.getElementById('spkIcon');
+    const leaveBtn = document.getElementById('leaveBtn');
+    const audioPool = document.getElementById('audioPool');
+
+    // State
+    let selfName = '';
+    let roomId = 'squad';
+    let isMuted = false;
+    let isDeafened = false;
+    let inCall = false;
+    let localStream = null;
+    let audioCtx = null;
+    let keepAliveAudio = null;
+    let wakeLock = null;
+    let mqttClients = [];
+    let seenMsgIds = new Set();
+    let vadTimer = null;
+    let beaconTimer = null;
+    let callTimer = null;
+    let callStartTime = 0;
+    let localAnalyser = null;
+    let localFreqData = null;
+
+    // Map<peerId, { pc, name, muted, candidates, audioEl, analyser, freqData, lastSeen, makingOffer, volume, rtt }>
+    const peers = new Map();
+
+    // 3. URL Invite Link Parsing (?room=xxxx) & Saved Preferences
+    function normalizeRoomCode(raw) {
+      return String(raw || 'squad').trim().toLowerCase().replace(/[^a-z0-9_-]/g, '').slice(0, 28) || 'squad';
+    }
+
+    try {
+      const savedName = localStorage.getItem('pv_user_name');
+      const savedRoom = localStorage.getItem('pv_room_code');
+      if (savedName) nameInput.value = savedName;
+      if (savedRoom) roomInput.value = savedRoom;
+
+      const params = new URLSearchParams(window.location.search);
+      const invitedRoom = params.get('room');
+      if (invitedRoom) {
+        const cleanRoom = normalizeRoomCode(invitedRoom);
+        roomInput.value = cleanRoom;
+        inviteRoomText.textContent = `Invited to Room #${cleanRoom}`;
+        inviteNotice.style.display = 'flex';
+        roomFieldGroup.style.display = 'none';
+      }
+    } catch (_e) {}
+
+    changeRoomBtn.addEventListener('click', () => {
+      inviteNotice.style.display = 'none';
+      roomFieldGroup.style.display = 'block';
+      roomInput.focus();
+    });
+
+    newRoomBtn.addEventListener('click', () => {
+      const randomCode = 'room-' + Math.random().toString(36).slice(2, 7);
+      roomInput.value = randomCode;
+      showToast(`Created #${randomCode}`);
+    });
+
+    function showToast(msg) {
+      toast.textContent = msg;
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 2200);
+    }
+
+    function getInviteUrl() {
+      const code = normalizeRoomCode(inCall ? roomId : roomInput.value);
+      return `${window.location.origin}/?room=${encodeURIComponent(code)}`;
+    }
+
+    async function shareRoomInvite() {
+      const url = getInviteUrl();
+      const code = normalizeRoomCode(inCall ? roomId : roomInput.value);
+      if (navigator.share) {
+        try {
+          await navigator.share({
+            title: 'Join my Voice Call on PulseVoice',
+            text: `Tap to join voice room #${code}:`,
+            url
+          });
+          return;
+        } catch (_e) {}
+      }
+      try {
+        await navigator.clipboard.writeText(url);
+        showToast('Invite Link Copied!');
+      } catch (_e) {
+        prompt('Copy Invite Link:', url);
+      }
+    }
+
+    topInviteBtn.addEventListener('click', shareRoomInvite);
+    lobbyShareBtn.addEventListener('click', shareRoomInvite);
+
+    // 4. Web Audio Context (Used ONLY for Chimes & Passive VAD - Never Overrides Hardware AEC3)
+    function getAudioCtx() {
+      const Ctx = window.AudioContext || window.webkitAudioContext;
+      if (!Ctx) return null;
+      if (!audioCtx) {
+        audioCtx = new Ctx({ latencyHint: 'interactive' });
+      }
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume().catch(() => {});
+      }
+      return audioCtx;
+    }
+
+    function playSound(type) {
+      if (isDeafened) return;
+      const ctx = getAudioCtx();
+      if (!ctx) return;
+      const now = ctx.currentTime;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+
+      if (type === 'join') {
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(587.33, now);
+        osc.frequency.setValueAtTime(880, now + 0.08);
+        gain.gain.setValueAtTime(0.001, now);
+        gain.gain.exponentialRampToValueAtTime(0.13, now + 0.015);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.22);
+        osc.start(now);
+        osc.stop(now + 0.23);
+      } else if (type === 'leave') {
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(659.25, now);
+        osc.frequency.setValueAtTime(440, now + 0.08);
+        gain.gain.setValueAtTime(0.001, now);
+        gain.gain.exponentialRampToValueAtTime(0.1, now + 0.015);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.21);
+        osc.start(now);
+        osc.stop(now + 0.22);
+      } else if (type === 'mute') {
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(isMuted ? 340 : 540, now);
+        gain.gain.setValueAtTime(0.001, now);
+        gain.gain.exponentialRampToValueAtTime(0.06, now + 0.01);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.075);
+        osc.start(now);
+        osc.stop(now + 0.08);
+      }
+    }
+
+    // 5. Background Call Persistence (Screen Lock & Minimize Support + Lock Screen Media Controls)
+    function enableBackgroundPersistence() {
+      try {
+        if (!keepAliveAudio) {
+          keepAliveAudio = document.createElement('audio');
+          keepAliveAudio.loop = true;
+          keepAliveAudio.volume = 0.01;
+          keepAliveAudio.setAttribute('playsinline', '');
+          keepAliveAudio.src = 'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA';
+          audioPool.appendChild(keepAliveAudio);
+        }
+        keepAliveAudio.play().catch(() => {});
+
+        if ('mediaSession' in navigator) {
+          navigator.mediaSession.metadata = new MediaMetadata({
+            title: `Voice Call • #${roomId}`,
+            artist: `${selfName} (Active Call)`,
+            album: 'PulseVoice'
+          });
+          navigator.mediaSession.playbackState = 'playing';
+          navigator.mediaSession.setActionHandler('play', () => {
+            if (keepAliveAudio) keepAliveAudio.play().catch(() => {});
+          });
+          navigator.mediaSession.setActionHandler('pause', () => {
+            if (keepAliveAudio) keepAliveAudio.play().catch(() => {});
+          });
+          navigator.mediaSession.setActionHandler('hangup', () => {
+            endCall();
+          });
+        }
+      } catch (_e) {}
+    }
+
+    document.addEventListener('visibilitychange', () => {
+      if (!inCall) return;
+      if (audioCtx && audioCtx.state === 'suspended') {
+        audioCtx.resume().catch(() => {});
+      }
+      if (keepAliveAudio && keepAliveAudio.paused) {
+        keepAliveAudio.play().catch(() => {});
+      }
+      for (const [, p] of peers.entries()) {
+        if (p.audioEl && p.audioEl.paused) {
+          p.audioEl.play().catch(() => {});
+        }
+      }
+      if (document.visibilityState === 'visible') {
+        broadcastSignal({ type: 'beacon' });
+        if ('wakeLock' in navigator) {
+          navigator.wakeLock.request('screen').then((w) => { wakeLock = w; }).catch(() => {});
+        }
+      }
+    });
+
+    // 6. Natural 48kHz Studio Microphone Acquisition
+    async function acquireCleanMicrophone() {
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        throw new Error('Microphone access requires HTTPS.');
+      }
+
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: {
+          echoCancellation: { ideal: true },
+          noiseSuppression: { ideal: true },
+          autoGainControl: { ideal: true },
+          channelCount: { ideal: 1 },
+          sampleRate: { ideal: 48000 }
+        },
+        video: false
+      });
+
+      const track = stream.getAudioTracks()[0];
+      if (track && 'contentHint' in track) {
+        track.contentHint = 'speech';
+      }
+
+      // Passive Local VAD Analyser (NOT connected to destination -> Zero Echo!)
+      try {
+        const ctx = getAudioCtx();
+        if (ctx) {
+          const src = ctx.createMediaStreamSource(stream);
+          localAnalyser = ctx.createAnalyser();
+          localAnalyser.fftSize = 256;
+          localAnalyser.smoothingTimeConstant = 0.25;
+          src.connect(localAnalyser);
+          localFreqData = new Uint8Array(localAnalyser.frequencyBinCount);
+        }
+      } catch (_e) {}
+
+      return stream;
+    }
+
+    // 7. Optimal Fullband 42kbps Opus SDP Enhancer (Zero User Config Needed)
+    function enhanceOpusSDP(sdp) {
+      if (!sdp) return sdp;
+      const lines = sdp.replace(/\r\n/g, '\n').split('\n');
+      const out = [];
+      let inAudio = false;
+      let bwInserted = false;
+
+      for (let i = 0; i < lines.length; i++) {
+        let line = lines[i];
+
+        if (line.startsWith('m=audio')) {
+          inAudio = true;
+          bwInserted = false;
+          out.push(line);
+          const next = lines[i + 1] || '';
+          if (!next.startsWith('c=')) {
+            out.push('b=AS:42');
+            bwInserted = true;
+          }
+          continue;
+        }
+
+        if (line.startsWith('m=') && !line.startsWith('m=audio')) {
+          inAudio = false;
+        }
+
+        if (inAudio) {
+          if (line.startsWith('b=AS:') || line.startsWith('b=TIAS:')) continue;
+
+          if (line.startsWith('c=') && !bwInserted) {
+            out.push(line);
+            out.push('b=AS:42');
+            bwInserted = true;
+            continue;
+          }
+
+          if (line.startsWith('a=fmtp:')) {
+            const params = [
+              'maxaveragebitrate=42000',
+              'maxplaybackrate=48000',
+              'sprop-maxcapturerate=48000',
+              'stereo=0',
+              'sprop-stereo=0',
+              'useinbandfec=1',
+              'usedtx=1',
+              'cbr=0',
+              'ptime=20',
+              'minptime=10'
+            ];
+            params.forEach((kv) => {
+              const k = kv.split('=')[0];
+              const rx = new RegExp(k + '=[^;\\s]+', 'i');
+              if (rx.test(line)) {
+                line = line.replace(rx, kv);
+              } else {
+                line += (line.endsWith(';') ? '' : ';') + kv;
+              }
+            });
+          }
+        }
+        out.push(line);
+      }
+      return out.join('\r\n');
+    }
+
+    async function configureRtpSender(pc) {
+      if (!pc || !pc.getSenders) return;
+      for (const sender of pc.getSenders()) {
+        if (sender.track && sender.track.kind === 'audio' && sender.getParameters) {
+          try {
+            const params = sender.getParameters();
+            if (!params.encodings || !params.encodings.length) params.encodings = [{}];
+            params.encodings[0].maxBitrate = 42000;
+            params.encodings[0].dtx = 'enabled';
+            params.encodings[0].priority = 'high';
+            params.encodings[0].networkPriority = 'high';
+            await sender.setParameters(params);
+          } catch (_e) {}
+        }
+      }
+    }
+
+    // 8. Strict Ghost/Duplicate Cleaner & UI Cards
+    function deduplicatePeerByName(incomingPeerId, incomingName) {
+      const clean = String(incomingName || '').trim().toLowerCase();
+      if (!clean) return;
+      for (const [id, entry] of peers.entries()) {
+        if (id !== incomingPeerId && String(entry.name || '').trim().toLowerCase() === clean) {
+          removePeer(id);
+        }
+      }
+    }
+
+    function renderUserCard(peerId, name, muted, subtitle = 'Connected') {
+      let card = document.getElementById(`card-${peerId}`);
+      const isSelf = peerId === 'self';
+
+      if (!card) {
+        card = document.createElement('div');
+        card.id = `card-${peerId}`;
+        card.className = 'user-card';
+        card.innerHTML = `
+          <div class="mic-pill" id="mic-${peerId}"></div>
+          <div class="avatar">${String(name || 'U').trim().slice(0, 2).toUpperCase()}</div>
+          <div class="u-name" id="name-${peerId}"></div>
+          <div class="u-sub"><span class="sig-dot" id="dot-${peerId}"></span><span id="sub-${peerId}"></span></div>
+          ${!isSelf ? `
+            <div class="vol-popup" id="volpop-${peerId}">
+              <span>🔊</span>
+              <input type="range" min="0" max="100" value="100" id="volrng-${peerId}" />
+            </div>
+          ` : ''}
+        `;
+        peersGrid.appendChild(card);
+
+        if (!isSelf) {
+          card.addEventListener('click', (e) => {
+            if (e.target.tagName === 'INPUT') return;
+            const pop = document.getElementById(`volpop-${peerId}`);
+            if (pop) pop.classList.toggle('show');
+          });
+          const rng = document.getElementById(`volrng-${peerId}`);
+          if (rng) {
+            rng.addEventListener('input', () => {
+              const p = peers.get(peerId);
+              if (p) {
+                p.volume = Number(rng.value) / 100;
+                if (p.audioEl) p.audioEl.volume = isDeafened ? 0 : p.volume;
+              }
+            });
+          }
+        }
+      }
+
+      const nameEl = document.getElementById(`name-${peerId}`);
+      const subEl = document.getElementById(`sub-${peerId}`);
+      if (nameEl) nameEl.textContent = isSelf ? `${name} (You)` : name;
+      if (subEl && subtitle) subEl.textContent = subtitle;
+
+      updateCardMuteBadge(peerId, muted);
+      memberCount.textContent = `${peers.size + 1} Joined`;
+    }
+
+    function updateCardMuteBadge(peerId, muted) {
+      const card = document.getElementById(`card-${peerId}`);
+      const pill = document.getElementById(`mic-${peerId}`);
+      const subEl = document.getElementById(`sub-${peerId}`);
+      if (!card || !pill) return;
+
+      if (muted) {
+        card.classList.add('muted-card');
+        card.classList.remove('speaking');
+        pill.className = 'mic-pill off';
+        pill.textContent = '🔇';
+        if (subEl) subEl.textContent = 'Muted';
+      } else {
+        card.classList.remove('muted-card');
+        pill.className = 'mic-pill on';
+        pill.textContent = '🎙️';
+        if (subEl && subEl.textContent === 'Muted') {
+          subEl.textContent = peerId === 'self' ? 'Active' : 'Connected';
+        }
+      }
+    }
+
+    function showCardReaction(peerId, emoji) {
+      const card = document.getElementById(`card-${peerId}`);
+      if (!card) return;
+      const pop = document.createElement('div');
+      pop.className = 'reaction-pop';
+      pop.textContent = emoji;
+      card.appendChild(pop);
+      setTimeout(() => pop.remove(), 1800);
+    }
+
+    // 9. Native Playout + Passive VAD (Zero Washroom Reverb, 100% Hardware Echo Cancellation)
+    function attachNativeRemoteAudio(peerId, entry, stream) {
+      let audioEl = entry.audioEl;
+      if (!audioEl) {
+        audioEl = document.createElement('audio');
+        audioEl.id = `remote-audio-${peerId}`;
+        audioEl.autoplay = true;
+        audioEl.playsInline = true;
+        audioEl.setAttribute('playsinline', '');
+        audioEl.setAttribute('webkit-playsinline', '');
+        audioPool.appendChild(audioEl);
+        entry.audioEl = audioEl;
+      }
+
+      if (audioEl.srcObject !== stream) {
+        audioEl.srcObject = stream;
+      }
+      audioEl.muted = isDeafened;
+      audioEl.volume = isDeafened ? 0 : entry.volume;
+
+      // Passive VAD Analyser (NOT connected to ctx.destination -> prevents double audio & preserves hardware AEC3!)
+      try {
+        const ctx = getAudioCtx();
+        if (ctx && !entry.analyser) {
+          const src = ctx.createMediaStreamSource(stream);
+          const analyser = ctx.createAnalyser();
+          analyser.fftSize = 256;
+          analyser.smoothingTimeConstant = 0.25;
+          src.connect(analyser);
+          entry.analyser = analyser;
+          entry.freqData = new Uint8Array(analyser.frequencyBinCount);
+        }
+      } catch (_e) {}
+
+      audioEl.play().catch(() => {
+        unlockBar.style.display = 'block';
+      });
+    }
+
+    // 10. Real-Time Active Speaker Detection & Call Timer
+    function startCallMonitors() {
+      stopCallMonitors();
+      callStartTime = Date.now();
+      timerChip.style.display = 'flex';
+
+      callTimer = setInterval(() => {
+        const elapsed = Math.floor((Date.now() - callStartTime) / 1000);
+        const mins = String(Math.floor(elapsed / 60)).padStart(2, '0');
+        const secs = String(elapsed % 60).padStart(2, '0');
+        timerChip.textContent = `${mins}:${secs}`;
+      }, 1000);
+
+      let tick = 0;
+      vadTimer = setInterval(async () => {
+        tick++;
+
+        // Self VAD
+        const selfCard = document.getElementById('card-self');
+        const selfSub = document.getElementById('sub-self');
+        if (selfCard) {
+          if (isMuted || !localAnalyser || !localFreqData) {
+            selfCard.classList.remove('speaking');
+          } else {
+            localAnalyser.getByteFrequencyData(localFreqData);
+            let sum = 0;
+            for (let i = 2; i < 38; i++) sum += localFreqData[i];
+            if (sum / 36 > 16) {
+              selfCard.classList.add('speaking');
+              if (selfSub) selfSub.textContent = 'Speaking';
+            } else {
+              selfCard.classList.remove('speaking');
+              if (selfSub) selfSub.textContent = 'Active';
+            }
+          }
+        }
+
+        // Remote Peers VAD
+        for (const [peerId, entry] of peers.entries()) {
+          const card = document.getElementById(`card-${peerId}`);
+          const sub = document.getElementById(`sub-${peerId}`);
+          if (!card) continue;
+
+          if (entry.muted || !entry.pc || entry.pc.connectionState !== 'connected') {
+            card.classList.remove('speaking');
+            continue;
+          }
+
+          let level = 0;
+          const receivers = entry.pc.getReceivers ? entry.pc.getReceivers() : [];
+          for (const r of receivers) {
+            if (r.track && r.track.kind === 'audio' && r.getSynchronizationSources) {
+              const srcs = r.getSynchronizationSources();
+              if (srcs && srcs.length > 0 && typeof srcs[0].audioLevel === 'number') {
+                level = Math.max(level, srcs[0].audioLevel);
+              }
+            }
+          }
+
+          if (level === 0 && entry.analyser && entry.freqData) {
+            entry.analyser.getByteFrequencyData(entry.freqData);
+            let s = 0;
+            for (let i = 2; i < 36; i++) s += entry.freqData[i];
+            level = (s / 34) / 255;
+          }
+
+          if (level > 0.015) {
+            card.classList.add('speaking');
+            if (sub) sub.textContent = 'Speaking';
+          } else {
+            card.classList.remove('speaking');
+            if (sub && !entry.muted) {
+              sub.textContent = entry.rtt ? `${entry.rtt}ms` : 'Connected';
+            }
+          }
+        }
+
+        // Measure RTT Ping every 3s
+        if (tick % 35 === 0) {
+          for (const [peerId, entry] of peers.entries()) {
+            if (entry.pc && entry.pc.connectionState === 'connected') {
+              try {
+                const stats = await entry.pc.getStats();
+                stats.forEach((rep) => {
+                  if (rep.type === 'candidate-pair' && rep.state === 'succeeded' && rep.currentRoundTripTime != null) {
+                    entry.rtt = Math.round(rep.currentRoundTripTime * 1000);
+                    const dot = document.getElementById(`dot-${peerId}`);
+                    if (dot) {
+                      dot.style.background = entry.rtt < 120 ? '#10b981' : '#f59e0b';
+                    }
+                  }
+                });
+              } catch (_e) {}
+            }
+          }
+        }
+      }, 80);
+    }
+
+    function stopCallMonitors() {
+      if (vadTimer) { clearInterval(vadTimer); vadTimer = null; }
+      if (callTimer) { clearInterval(callTimer); callTimer = null; }
+      timerChip.style.display = 'none';
+      timerChip.textContent = '00:00';
+    }
+
+    // 11. WebRTC P2P Mesh Engine with Auto-Recovery
+    function ensurePeerConnection(remotePeerId, remoteName, remoteMuted, isInitiator) {
+      if (!remotePeerId || remotePeerId === selfId) return null;
+
+      deduplicatePeerByName(remotePeerId, remoteName);
+
+      if (peers.has(remotePeerId)) {
+        const existing = peers.get(remotePeerId);
+        existing.lastSeen = Date.now();
+        if (remoteName && existing.name !== remoteName) {
+          existing.name = remoteName;
+          renderUserCard(remotePeerId, remoteName, existing.muted);
+        }
+        // If connection previously failed/closed, rebuild it cleanly
+        const st = existing.pc ? existing.pc.connectionState : 'closed';
+        if (st === 'failed' || st === 'closed') {
+          removePeer(remotePeerId);
+        } else {
+          return existing;
+        }
+      }
+
+      const pc = new RTCPeerConnection(RTC_CONFIG);
+      const entry = {
+        pc,
+        name: remoteName || 'User',
+        muted: Boolean(remoteMuted),
+        candidates: [],
+        audioEl: null,
+        analyser: null,
+        freqData: null,
+        lastSeen: Date.now(),
+        makingOffer: false,
+        volume: 1.0,
+        rtt: null
+      };
+
+      peers.set(remotePeerId, entry);
+      renderUserCard(remotePeerId, entry.name, entry.muted, 'Connecting...');
+
+      if (localStream) {
+        localStream.getTracks().forEach((t) => pc.addTrack(t, localStream));
+      }
+
+      pc.onicecandidate = (e) => {
+        if (e.candidate) {
+          sendDirectSignal(remotePeerId, { type: 'candidate', candidate: e.candidate });
+        }
+      };
+
+      pc.ontrack = (e) => {
+        const [stream] = e.streams;
+        if (stream) {
+          attachNativeRemoteAudio(remotePeerId, entry, stream);
+        }
+      };
+
+      pc.onconnectionstatechange = () => {
+        const st = pc.connectionState;
+        const subEl = document.getElementById(`sub-${remotePeerId}`);
+        if (st === 'connected') {
+          if (subEl && !entry.muted) subEl.textContent = 'Connected';
+          configureRtpSender(pc);
+        } else if (st === 'failed' || st === 'disconnected') {
+          if (subEl) subEl.textContent = 'Reconnecting...';
+          if (isInitiator && pc.restartIce) {
+            try { pc.restartIce(); } catch (_e) {}
+          }
+        }
+      };
+
+      if (isInitiator) {
+        createAndSendOffer(remotePeerId, entry);
+      }
+
+      return entry;
+    }
+
+    async function createAndSendOffer(remotePeerId, entry) {
+      const { pc } = entry;
+      try {
+        entry.makingOffer = true;
+        const offer = await pc.createOffer({ offerToReceiveAudio: true, offerToReceiveVideo: false });
+        await pc.setLocalDescription({ type: offer.type, sdp: enhanceOpusSDP(offer.sdp) });
+        await configureRtpSender(pc);
+        sendDirectSignal(remotePeerId, { type: 'sdp', description: pc.localDescription });
+      } catch (_e) {
+      } finally {
+        entry.makingOffer = false;
+      }
+    }
+
+    async function onIncomingWebRTCSignal(fromPeerId, fromName, fromMuted, signal) {
+      if (!fromPeerId || fromPeerId === selfId) return;
+      let entry = peers.get(fromPeerId);
+      if (!entry) {
+        entry = ensurePeerConnection(fromPeerId, fromName, fromMuted, false);
+      }
+      if (!entry) return;
+      entry.lastSeen = Date.now();
+
+      const { pc } = entry;
+      try {
+        if (signal.type === 'sdp' && signal.description) {
+          const desc = signal.description;
+          const isPolite = String(selfId) < String(fromPeerId);
+          const collision = desc.type === 'offer' && (entry.makingOffer || pc.signalingState !== 'stable');
+          if (collision && !isPolite) return;
+
+          await pc.setRemoteDescription({ type: desc.type, sdp: enhanceOpusSDP(desc.sdp) });
+
+          while (entry.candidates.length > 0) {
+            try { await pc.addIceCandidate(entry.candidates.shift()); } catch (_e) {}
+          }
+
+          if (desc.type === 'offer') {
+            const answer = await pc.createAnswer();
+            await pc.setLocalDescription({ type: answer.type, sdp: enhanceOpusSDP(answer.sdp) });
+            await configureRtpSender(pc);
+            sendDirectSignal(fromPeerId, { type: 'sdp', description: pc.localDescription });
+          }
+        } else if (signal.type === 'candidate' && signal.candidate) {
+          if (pc.remoteDescription && pc.remoteDescription.type) {
+            await pc.addIceCandidate(signal.candidate);
+          } else {
+            entry.candidates.push(signal.candidate);
+          }
+        }
+      } catch (_e) {}
+    }
+
+    function removePeer(peerId) {
+      const entry = peers.get(peerId);
+      if (entry) {
+        try {
+          if (entry.audioEl) {
+            entry.audioEl.srcObject = null;
+            entry.audioEl.remove();
+          }
+          entry.pc.onicecandidate = null;
+          entry.pc.ontrack = null;
+          entry.pc.onconnectionstatechange = null;
+          entry.pc.close();
+        } catch (_e) {}
+        peers.delete(peerId);
+      }
+      const card = document.getElementById(`card-${peerId}`);
+      if (card) card.remove();
+      memberCount.textContent = `${peers.size + 1} Joined`;
+    }
+
+    // 12. Dual-Active Parallel Signaling Mesh (Guarantees Late Joiners Always Land in Same Room)
+    function makeMsgId() {
+      return Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
+    }
+
+    function publishToAllBrokers(topic, payloadObj) {
+      const packet = JSON.stringify({
+        ...payloadObj,
+        msgId: makeMsgId()
+      });
+      mqttClients.forEach((client) => {
+        if (client && client.connected) {
+          try { client.publish(topic, packet, { qos: 0 }); } catch (_e) {}
+        }
+      });
+    }
+
+    function sendDirectSignal(targetPeerId, signal) {
+      publishToAllBrokers(`pulsevoice_v4/${roomId}/direct/${targetPeerId}`, {
+        type: 'signal',
+        fromPeerId: selfId,
+        fromName: selfName,
+        fromMuted: isMuted,
+        signal
+      });
+    }
+
+    function broadcastSignal(payload) {
+      publishToAllBrokers(`pulsevoice_v4/${roomId}/room`, {
+        ...payload,
+        peerId: selfId,
+        name: selfName,
+        muted: isMuted
+      });
+    }
+
+    function startDualActiveSignaling() {
+      stopSignaling();
+
+      const roomTopic = `pulsevoice_v4/${roomId}/room`;
+      const directTopic = `pulsevoice_v4/${roomId}/direct/${selfId}`;
+
+      BROKER_URLS.forEach((url, idx) => {
+        const client = window.mqtt.connect(url, {
+          clientId: `${selfId}_b${idx}_${Math.random().toString(16).slice(2, 6)}`,
+          clean: true,
+          keepalive: 20,
+          connectTimeout: 5000,
+          reconnectPeriod: 2000
+        });
+
+        client.on('connect', () => {
+          subStatus.textContent = 'Encrypted Live Mesh';
+          client.subscribe([roomTopic, directTopic], { qos: 0 }, () => {
+            broadcastSignal({ type: 'join' });
+          });
+        });
+
+        client.on('message', (topic, buf) => {
+          let msg;
+          try { msg = JSON.parse(buf.toString()); } catch (_e) { return; }
+          if (!msg || msg.peerId === selfId || msg.fromPeerId === selfId) return;
+
+          // Deduplicate message across parallel brokers
+          if (msg.msgId) {
+            if (seenMsgIds.has(msg.msgId)) return;
+            seenMsgIds.add(msg.msgId);
+            if (seenMsgIds.size > 600) {
+              const first = seenMsgIds.values().next().value;
+              seenMsgIds.delete(first);
+            }
+          }
+
+          if (topic === directTopic) {
+            if (msg.type === 'signal') {
+              onIncomingWebRTCSignal(msg.fromPeerId, msg.fromName, msg.fromMuted, msg.signal);
+            } else if (msg.type === 'welcome') {
+              const isNew = !peers.has(msg.peerId);
+              if (isNew) playSound('join');
+              const shouldInit = String(selfId) > String(msg.peerId);
+              ensurePeerConnection(msg.peerId, msg.name, msg.muted, shouldInit);
+            }
+            return;
+          }
+
+          if (msg.type === 'join' || msg.type === 'beacon') {
+            const existing = peers.get(msg.peerId);
+            const isNew = !existing;
+            if (isNew && msg.type === 'join') playSound('join');
+
+            const st = existing && existing.pc ? existing.pc.connectionState : 'new';
+            const needHandshake = isNew || st === 'failed' || st === 'closed' || st === 'disconnected';
+            const shouldInit = String(selfId) > String(msg.peerId);
+
+            ensurePeerConnection(msg.peerId, msg.name, msg.muted, needHandshake && shouldInit);
+
+            if (existing) {
+              existing.lastSeen = Date.now();
+              if (existing.muted !== Boolean(msg.muted)) {
+                existing.muted = Boolean(msg.muted);
+                updateCardMuteBadge(msg.peerId, existing.muted);
+              }
+            }
+
+            if (msg.type === 'join' || needHandshake) {
+              publishToAllBrokers(`pulsevoice_v4/${roomId}/direct/${msg.peerId}`, {
+                type: 'welcome',
+                peerId: selfId,
+                name: selfName,
+                muted: isMuted
+              });
+            }
+          } else if (msg.type === 'mute') {
+            const p = peers.get(msg.peerId);
+            if (p) {
+              p.muted = Boolean(msg.muted);
+              updateCardMuteBadge(msg.peerId, p.muted);
+            }
+          } else if (msg.type === 'react' && msg.emoji) {
+            showCardReaction(msg.peerId, msg.emoji);
+          } else if (msg.type === 'leave') {
+            playSound('leave');
+            removePeer(msg.peerId);
+          }
+        });
+
+        mqttClients.push(client);
+      });
+
+      // Continuous 3.5s Room Beacon so late joiners (even 5 hours later) immediately sync
+      beaconTimer = setInterval(() => {
+        if (!inCall) return;
+        broadcastSignal({ type: 'beacon' });
+        const now = Date.now();
+        for (const [id, entry] of peers.entries()) {
+          const st = entry.pc ? entry.pc.connectionState : 'closed';
+          if (now - entry.lastSeen > 18000 && st !== 'connected') {
+            removePeer(id);
+          }
+        }
+      }, 3500);
+    }
+
+    function stopSignaling() {
+      if (beaconTimer) { clearInterval(beaconTimer); beaconTimer = null; }
+      mqttClients.forEach((c) => {
+        try { c.end(true); } catch (_e) {}
+      });
+      mqttClients = [];
+      seenMsgIds.clear();
+    }
+
+    // 13. Controls: Hardware Mute, Push-to-Talk, Deafen, Reactions, End Call
+    function setHardwareMicMute(muteFlag, notify = true) {
+      isMuted = Boolean(muteFlag);
+      if (localStream) {
+        localStream.getAudioTracks().forEach((t) => {
+          t.enabled = !isMuted;
+        });
+      }
+
+      if (isMuted) {
+        muteBtn.classList.add('is-muted');
+        muteIcon.textContent = '🔇';
+        muteLabel.textContent = 'Muted';
+      } else {
+        muteBtn.classList.remove('is-muted');
+        muteIcon.textContent = '🎙️';
+        muteLabel.textContent = 'Mic On';
+      }
+
+      updateCardMuteBadge('self', isMuted);
+      if (notify && inCall) {
+        broadcastSignal({ type: 'mute', muted: isMuted });
+      }
+    }
+
+    muteBtn.addEventListener('click', () => {
+      getAudioCtx();
+      setHardwareMicMute(!isMuted, true);
+      playSound('mute');
+    });
+
+    // Push-to-Talk (Walkie-Talkie Hold Button)
+    function startPTT(e) {
+      e.preventDefault();
+      if (!inCall) return;
+      pttBtn.classList.add('holding');
+      if (isMuted) {
+        setHardwareMicMute(false, true);
+      }
+    }
+
+    function stopPTT(e) {
+      e.preventDefault();
+      if (!inCall || !pttBtn.classList.contains('holding')) return;
+      pttBtn.classList.remove('holding');
+      setHardwareMicMute(true, true);
+    }
+
+    pttBtn.addEventListener('mousedown', startPTT);
+    pttBtn.addEventListener('mouseup', stopPTT);
+    pttBtn.addEventListener('mouseleave', stopPTT);
+    pttBtn.addEventListener('touchstart', startPTT, { passive: false });
+    pttBtn.addEventListener('touchend', stopPTT, { passive: false });
+
+    // Speaker Deafen Toggle
+    deafenBtn.addEventListener('click', () => {
+      isDeafened = !isDeafened;
+      if (isDeafened) {
+        deafenBtn.classList.add('deafened');
+        spkIcon.textContent = '🔈';
+        showToast('Speaker Muted');
+      } else {
+        deafenBtn.classList.remove('deafened');
+        spkIcon.textContent = '🔊';
+        showToast('Speaker Active');
+      }
+      for (const [, p] of peers.entries()) {
+        if (p.audioEl) {
+          p.audioEl.muted = isDeafened;
+          p.audioEl.volume = isDeafened ? 0 : p.volume;
+        }
+      }
+    });
+
+    // Emoji Reactions
+    document.querySelectorAll('.react-btn').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const emoji = btn.getAttribute('data-emoji');
+        if (!emoji || !inCall) return;
+        showCardReaction('self', emoji);
+        broadcastSignal({ type: 'react', emoji });
+      });
+    });
+
+    // Join Call Submit
+    joinForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      errBox.style.display = 'none';
+      joinBtn.disabled = true;
+      joinBtn.textContent = 'Connecting...';
+
+      selfName = nameInput.value.trim() || 'User';
+      roomId = normalizeRoomCode(roomInput.value);
+
+      try {
+        localStorage.setItem('pv_user_name', selfName);
+        localStorage.setItem('pv_room_code', roomId);
+        window.history.replaceState({}, '', `/?room=${encodeURIComponent(roomId)}`);
+      } catch (_e) {}
+
+      try {
+        getAudioCtx();
+        localStream = await acquireCleanMicrophone();
+        inCall = true;
+        isMuted = false;
+
+        activeRoomTitle.textContent = `#${roomId}`;
+        peersGrid.innerHTML = '';
+
+        lobbyView.style.display = 'none';
+        callView.style.display = 'flex';
+
+        renderUserCard('self', selfName, false, 'Active');
+        setHardwareMicMute(false, false);
+        playSound('join');
+
+        enableBackgroundPersistence();
+        startCallMonitors();
+
+        if ('wakeLock' in navigator) {
+          navigator.wakeLock.request('screen').then((w) => { wakeLock = w; }).catch(() => {});
+        }
+
+        startDualActiveSignaling();
+      } catch (err) {
+        errBox.textContent = err.message || 'Please allow microphone permission.';
+        errBox.style.display = 'block';
+      } finally {
+        joinBtn.disabled = false;
+        joinBtn.textContent = 'Join Voice Call';
+      }
+    });
+
+    function endCall() {
+      if (!inCall) return;
+      inCall = false;
+      playSound('leave');
+      broadcastSignal({ type: 'leave' });
+
+      stopSignaling();
+      stopCallMonitors();
+
+      for (const [id] of peers.entries()) removePeer(id);
+      peers.clear();
+
+      if (localStream) {
+        localStream.getTracks().forEach((t) => t.stop());
+        localStream = null;
+      }
+      if (keepAliveAudio) {
+        keepAliveAudio.pause();
+      }
+      if (wakeLock) {
+        wakeLock.release().catch(() => {});
+        wakeLock = null;
+      }
+
+      subStatus.textContent = 'Private Voice Rooms';
+      peersGrid.innerHTML = '';
+      unlockBar.style.display = 'none';
+      callView.style.display = 'none';
+      lobbyView.style.display = 'flex';
+    }
+
+    leaveBtn.addEventListener('click', endCall);
+    window.addEventListener('pagehide', () => {
+      if (inCall) broadcastSignal({ type: 'leave' });
+    });
+
+    unlockBar.addEventListener('click', () => {
+      getAudioCtx();
+      for (const [, p] of peers.entries()) {
+        if (p.audioEl) p.audioEl.play().catch(() => {});
+      }
+      unlockBar.style.display = 'none';
+    });
+  </script>
+</body>
+</html>
